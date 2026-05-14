@@ -1,32 +1,42 @@
-<?php
-include "config/db.php";
+    <?php
+
+include("config/db.php");
 
 header("Content-Type: application/json");
 
-$q = $_GET['q'] ?? '';
+$q = isset($_GET['q']) ? trim($_GET['q']) : '';
 
-if ($q == '') {
+if($q == ''){
     echo json_encode([]);
     exit;
 }
 
-$sql = "SELECT station_name, station_code 
-        FROM stations 
-        WHERE station_name LIKE ? OR station_code LIKE ? 
+$sql = "SELECT code, name 
+        FROM stations
+        WHERE code LIKE ? 
+        OR name LIKE ?
         LIMIT 10";
 
 $stmt = $conn->prepare($sql);
 
-$like = "%$q%";
-$stmt->bind_param("ss", $like, $like);
+$search = "%".$q."%";
+
+$stmt->bind_param("ss", $search, $search);
+
 $stmt->execute();
 
 $result = $stmt->get_result();
 
 $data = [];
 
-while ($row = $result->fetch_assoc()) {
-    $data[] = $row;
+while($row = $result->fetch_assoc()){
+
+    $data[] = [
+        "station_code" => $row['code'],
+        "station_name" => $row['name']
+    ];
 }
 
 echo json_encode($data);
+
+?>

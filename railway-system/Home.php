@@ -68,6 +68,7 @@ body {
     color: orange;
 }
 
+
 /* NAV LOGIN BUTTON */
 .nav-login-btn {
     background: linear-gradient(45deg, orange, darkorange);
@@ -82,6 +83,20 @@ body {
 
 .nav-login-btn:hover {
     transform: scale(1.05);
+}
+
+/* NAV LOGIN BUTTON */
+.logout-btn{
+    background:#ff4d4d;
+    color:white;
+    padding:10px 18px;
+    border-radius:6px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.logout-btn:hover{
+    background:#cc0000;
 }
 
 /* ===== HERO ===== */
@@ -129,7 +144,7 @@ body {
 /* FROM & TO */
 .input-box {
     flex: 1; /* bigger */
-    position: center;
+    position:center;
 }
 
 /* DATE + SELECT */
@@ -141,32 +156,30 @@ body {
 /* ALL INPUTS */
 .booking-box input,
 .booking-box select {
-    width: 85%;
+    width: 100%;
     padding: 12px;
     border-radius: 6px;
-    border: none;
-}
+    border: none;}
 
-/* SWAP BUTTON */
 .swap-btn {
-    background: white;
+    background: #ff6a00;
+    color: #fff;
     border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 18px;
-    font-weight: bold;
-    transition: 0.2s;
+    border-radius: 20%;
+    width: 35px;
+    height: 24px;
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+    justify-content:  center;
+    box-shadow:04px  10px rgba(0,0,0,0.3)
+    
 }
 
 .swap-btn:hover {
-    transform: rotate(180deg);
-    background: orange;
-    color: white;
-
+    background: #ff8533;
+   
 }
-
 
 .booking-box input,
 .booking-box select {
@@ -304,7 +317,7 @@ body {
     overflow-y: auto;
     z-index: 1000;
 
-    border: none; /* 🔥 removed line */
+    border: none; /*  removed line */
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
@@ -334,10 +347,10 @@ body {
 
     <div class="nav-links">
         <a href="#">HOME</a>
-        <a href="#">TRAINS</a>
-        <a href="#">PNR STATUS</a>
-        <a href="#">MY BOOKINGS</a>
-        <a href="#">CONTACT</a>
+        <a href="train_route.php">TRAINS</a>
+        <a href="pnr.php">PNR STATUS</a>
+        <a href="mybook.php">MY BOOKINGS</a>
+        <a href="contact.php">CONTACT</a>
 
         <span style="margin-left:20px; color:white;">
             Welcome <?php echo $_SESSION['username']; ?>
@@ -345,6 +358,8 @@ body {
 
 
         <button class="nav-login-btn" onclick="openLogin()">LOGIN</button>
+        <a href="logout.php" class="logout-btn">Logout</a>
+        
     </div>
 </div>
 
@@ -362,22 +377,38 @@ body {
 
     <form action="search.php" method="GET">
 
-    <!-- FROM -->
     <div class="input-group">
-        <input type="text" id="fromInput" placeholder="From" autocomplete="off">
-        <input type="hidden" id="fromCode" name="source">
-        <div id="fromList" class="dropdown"></div>
-    </div>
 
-    <!-- TO -->
+    <input type="text"
+           id="fromInput"
+           placeholder="From"
+           autocomplete="off">
+
+    <input type="hidden"
+           name="source"
+           id="fromCode">
+
+    <div class="dropdown" id="fromList"></div>
+
+</div>
+     <!-- 🔁 ADD THIS SWAP BUTTON HERE -->
+    <button type="button" class="swap-btn" onclick="swapStations()">⇄</button>
+
     <div class="input-group">
-        <input type="text" id="toInput" placeholder="To" autocomplete="off">
-        <input type="hidden" id="toCode" name="destination">
-        <div id="toList" class="dropdown"></div>
-    </div>
 
+    <input type="text"
+           id="toInput"
+           placeholder="To"
+           autocomplete="off">
 
-    <input type="date" name="date" required>
+    <input type="hidden"
+           name="destination"
+           id="toCode">
+
+    <div class="dropdown" id="toList"></div>
+
+</div>
+<input type="date" name="date" required>
 
     <!-- CLASS -->
     <select name="class">
@@ -495,6 +526,7 @@ body {
     </div>
 </div>
 
+
 <script>
 // ================= LOGIN =================
 function openLogin(){
@@ -514,48 +546,77 @@ function closeSupport(){
     document.getElementById("supportModal").style.display = "none";
 }
 
+function swapStations() {
+
+    const fromInput = document.getElementById("fromInput");
+    const toInput = document.getElementById("toInput");
+
+    const fromCode = document.getElementById("fromCode");
+    const toCode = document.getElementById("toCode");
+
+    let tempText = fromInput.value;
+    fromInput.value = toInput.value;
+    toInput.value = tempText;
+
+    let tempCode = fromCode.value;
+    fromCode.value = toCode.value;
+    toCode.value = tempCode;
+}
+
 // ================= AUTOCOMPLETE =================
-function setupAuto(inputId, listId, hiddenId) {
+function setupAuto(inputId, listId, hiddenId){
 
     const input = document.getElementById(inputId);
     const list = document.getElementById(listId);
     const hidden = document.getElementById(hiddenId);
 
-    input.addEventListener("input", function () {
+    let timeout;
+
+    input.addEventListener("input", function(){
 
         const value = this.value.trim();
 
-        if (value.length < 1) {
+        hidden.value = "";
+
+        clearTimeout(timeout);
+
+        if(value.length < 1){
             list.style.display = "none";
-            hidden.value = "";
             return;
         }
 
-        fetch("station_search.php?q=" + value)
+        timeout = setTimeout(() => {
+
+            fetch("station_search.php?q=" + value)
+
             .then(res => res.json())
+
             .then(data => {
 
                 list.innerHTML = "";
 
-                if (data.length === 0) {
+                if(data.length === 0){
+
                     list.innerHTML = "<div class='item'>No station found</div>";
                     list.style.display = "block";
-                    hidden.value = "";
                     return;
                 }
-
-                // ✅ auto-select first result
-                hidden.value = data[0].station_code;
 
                 data.forEach(st => {
 
                     const div = document.createElement("div");
+
                     div.className = "item";
-                    div.textContent = st.station_name + " (" + st.station_code + ")";
+
+                    div.innerHTML =
+                        st.station_name + " (" + st.station_code + ")";
 
                     div.onclick = () => {
+
                         input.value = st.station_name;
+
                         hidden.value = st.station_code;
+
                         list.style.display = "none";
                     };
 
@@ -564,37 +625,31 @@ function setupAuto(inputId, listId, hiddenId) {
 
                 list.style.display = "block";
             })
-            .catch(() => {
-                list.innerHTML = "<div class='item'>Error loading data</div>";
+
+            .catch(err => {
+
+                console.log(err);
+
+                list.innerHTML =
+                    "<div class='item'>Error loading data</div>";
+
                 list.style.display = "block";
             });
+
+        }, 300);
     });
 
-    // hide dropdown
-    document.addEventListener("click", function (e) {
-        if (!input.contains(e.target) && !list.contains(e.target)) {
+    document.addEventListener("click", function(e){
+
+        if(!input.contains(e.target) &&
+           !list.contains(e.target)){
+
             list.style.display = "none";
         }
     });
 }
-
-
-// INIT
 setupAuto("fromInput", "fromList", "fromCode");
 setupAuto("toInput", "toList", "toCode");
-
-
-// FORM VALIDATION
-document.querySelector("form").addEventListener("submit", function (e) {
-
-    const from = document.getElementById("fromCode").value;
-    const to = document.getElementById("toCode").value;
-
-    if (!from || !to) {
-        alert("Please select station properly");
-        e.preventDefault();
-    }
-});
 </script>
 </body>
 </html>
